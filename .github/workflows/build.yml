@@ -18,13 +18,13 @@ jobs:
       - name: Checkout device tree
         uses: actions/checkout@v4
 
-      - name: Setup build environment
+            - name: Setup build environment
         run: |
           sudo apt-get update
           sudo apt-get install -y git-core gnupg flex bison build-essential zip curl \
-            zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 \
-            lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
-            libxml2-utils xsltproc unzip fontconfig
+            zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses6 \
+            lib32ncurses-dev libncurses-dev x11proto-core-dev libx11-dev \
+            lib32z1-dev libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
