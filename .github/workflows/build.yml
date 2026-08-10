@@ -29,8 +29,8 @@ jobs:
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
 
-        - name: Sync Lineage source
-        run: |
+       - name: Sync Lineage source
+         run: |
           mkdir -p ~/lineage && cd ~/lineage
           export PATH=~/bin:$PATH
           git config --global user.name "Build"
