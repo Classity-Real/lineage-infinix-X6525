@@ -1,70 +1,63 @@
-name: Standalone LineageOS Recovery Builder
+name: Build Lineage Recovery
 
-on:
-  workflow_dispatch:
+on: [workflow_dispatch]
 
 jobs:
-  build_recovery:
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
+  build:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout Workflow Repository
-      uses: actions/checkout@v4
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
 
-    - name: Clean Runner Disk Space
-      uses: jlumbroso/free-disk-space@v1.3.1
-      with:
-        tool-cache: true
-        android: true
-        dotnet: true
-        haskell: true
-        large-packages: true
-        docker-images: true
-        swap-storage: true
+      - name: Checkout device tree
+        uses: actions/checkout@v4
 
-    - name: Install Build Tooling Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32readline-dev lib32z1-dev libelf-dev liblz4-tool libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python3 openjdk-17-jdk
+      - name: Setup build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git-core gnupg flex bison build-essential zip curl \
+            zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 \
+            lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
+            libxml2-utils xsltproc unzip fontconfig
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
 
-    - name: Configure Repo Environment
-      run: |
-        mkdir -p ~/bin
-        curl https://googleapis.com > ~/bin/repo
-        chmod a+x ~/bin/repo
-        echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Sync Lineage source
+        run: |
+          mkdir -p ~/lineage && cd ~/lineage
+          export PATH=~/bin:$PATH
+          git config --global user.name "Build"
+          git config --global user.email "build@github.com"
+          repo init -u https://github.com/LineageOS/android.git -b lineage-21.0 --git-lfs --depth=1
+          repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune -j$(nproc)
 
-    - name: Initialize Lineage Standalone Manifest
-      run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
-        mkdir -p ~/android
-        cd ~/android
-        repo init -u https://github.com -b lineage-20.0 --depth=1
+      - name: Clone device tree
+        run: |
+          cd ~/lineage
+          git clone https://github.com/${{ github.repository }}.git device/infinix/X6525
 
-    - name: Shallow Sync (Recovery Minimal)
-      run: |
-        cd ~/android
-        repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+      - name: Decompress kernel
+        run: |
+          cd ~/lineage/device/infinix/X6525/prebuilt
+          gunzip -f kernel.gz
 
-    - name: Clone Your Device Tree
-      run: |
-        cd ~/android
-        git clone https://github.com -b X6525-user-13-TP1A.220624.014-646-release-keys device/infinix/Infinix-X6525
+      - name: Build vendorbootimage
+        run: |
+          cd ~/lineage
+          export PATH=~/bin:$PATH
+          source build/envsetup.sh
+          lunch lineage_X6525-eng
+          make vendorbootimage -j$(nproc)
 
-    - name: Build Standalone Recovery Image
-      run: |
-        cd ~/android
-        source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
-        export BUILDING_RECOVERY_IMAGE=true
-        lunch lineage_Infinix-X6525-userdebug
-        mka recoveryimage -j$(nproc --all)
-
-    - name: Upload Standalone recovery.img Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Standalone-Lineage-Recovery-X6525
-        path: ~/android/out/target/product/Infinix-X6525/recovery.img
+      - name: Upload vendor_boot
+        uses: actions/upload-artifact@v4
+        with:
+          name: lineage-recovery-vendor_boot
+          path: ~/lineage/out/target/product/X6525/vendor_boot.img
