@@ -18,7 +18,7 @@ jobs:
       - name: Checkout device tree
         uses: actions/checkout@v4
 
-            - name: Setup build environment
+      - name: Setup build environment
         run: |
           sudo apt-get update
           sudo apt-get install -y git-core gnupg flex bison build-essential zip curl \
