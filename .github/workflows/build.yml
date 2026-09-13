@@ -51,6 +51,7 @@ jobs:
         run: |
           cd ~/lineage/device/infinix/X6525/prebuilt
           gunzip -f kernel.gz
+          cp -f dtb.img dtb.dtb
 
       - name: Build vendorbootimage
         run: |
@@ -66,3 +67,4 @@ jobs:
         with:
           name: lineage-recovery-vendor_boot
           path: ~/lineage/out/target/product/X6525/vendor_boot.img
+\
