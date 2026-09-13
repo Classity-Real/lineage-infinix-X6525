@@ -40,7 +40,7 @@ jobs:
           git config --global user.email "build@github.com"
           repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-14.1 --depth=1 --partial-clone --clone-filter=blob:limit=10M
           repo sync -c -g default,-cts,-developers,-device,-qcom,-vts,-trusty \
-            --no-clone-bundle --no-tags --prune --force-sync --retry-fetches=3 -j2
+            --no-clone-bundle --no-tags --prune --force-sync --retry-fetches=3 -j4
 
       - name: Clone device tree
         run: |
