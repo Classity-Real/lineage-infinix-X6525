@@ -67,4 +67,3 @@ jobs:
         with:
           name: lineage-recovery-vendor_boot
           path: ~/lineage/out/target/product/X6525/vendor_boot.img
-\
