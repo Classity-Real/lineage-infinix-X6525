@@ -48,6 +48,7 @@ TARGET_NO_BOOTLOADER := true
 
 # Display
 TARGET_SCREEN_DENSITY := 320
+TW_THEME := portrait_hdpi
 
 # Kernel - prebuilt only
 TARGET_NO_KERNEL := false
